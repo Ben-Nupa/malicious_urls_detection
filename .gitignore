@@ -1,0 +1,22 @@
+# Python cache
+*.pyc
+__pycache__/
+
+# IDEA
+.idea/
+
+# Virtual environments
+env/
+venv/
+
+# Private environment variables
+.env
+
+# Datasets
+datasets/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Other
+random_tests/
