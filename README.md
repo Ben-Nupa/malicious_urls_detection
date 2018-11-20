@@ -19,6 +19,11 @@ pip install -r requirements.txt
 
 [Dataset 2](https://github.com/incertum/cyber-matrix-ai/blob/master/Malicious-URL-Detection-Deep-Learning/data/url_data_mega_deep_learning.csv): Balanced dataset
 
+## Credits
+The code here is based on the work of these people:
+Hillary Sanders and Joshua Saxe - *Garbage In, Garbage Out How purportedly great ML models can be screwed up by bad data* - [paper](https://www.blackhat.com/docs/us-17/wednesday/us-17-Sanders-Garbage-In-Garbage-Out-How-Purportedly-Great-ML-Models-Can-Be-Screwed-Up-By-Bad-Data-wp.pdf), [slides](https://www.blackhat.com/docs/us-17/wednesday/us-17-Sanders-Garbage-In-Garbage-Out-How-Purportedly-Great-ML-Models-Can-Be-Screwed-Up-By-Bad-Data.pdf)
+Joshua Saxe and Konstantin Berlin - *eXpose: A Character-Level Convolutional Neural Network with Embeddings For Detecting Malicious URLs, File Paths and Registry Keys* - [paper](https://arxiv.org/abs/1702.08568) and their [github](https://github.com/joshsaxe/eXposeDeepNeuralNetwork)
+
 
 ## Contributing
 
