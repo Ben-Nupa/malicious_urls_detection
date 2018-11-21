@@ -1,14 +1,36 @@
 import pandas as pd
 from keras.preprocessing.text import one_hot
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
 
 class FeatureGenerator:
-    def load_data(self, dataset: str, url_column_name="url", label_column_name="label", to_binarize=False) -> tuple:
-        """Load given data file into self.urls and self.labels"""
+    @staticmethod
+    def load_data(dataset: str, url_column_name="url", label_column_name="label", to_binarize=False,
+                  neg_word="bad") -> tuple:
+        """
+        Load given data file into self.urls and self.labels
+
+        Parameters
+        ----------
+        dataset
+            Path of csv file containing the dataset.
+        url_column_name
+            Name of the column containing the urls.
+        label_column_name
+            Name of the column containing the labels.
+        to_binarize
+            True if the label column is not already in binary form.
+        neg_word
+            Negative word in the label column. Only considered if 'to_binarize' is True.
+
+        Returns
+        -------
+        tuple
+            (list containing the urls, list containing the labels)
+        """
 
         def binarize_list(element: str) -> int:
-            if element == "bad":
+            """Binarize given element."""
+            if element == neg_word:
                 return 1
             else:
                 return 0
@@ -24,8 +46,3 @@ class FeatureGenerator:
         """Integer encode the documents"""
         encoded_docs = [one_hot(str(d), vocab_size) for d in urls]
         return encoded_docs
-
-    @staticmethod
-    def build_lexical_features(data):
-        vectorizer = CountVectorizer()
-        vectorizer.fit_transform(data)
