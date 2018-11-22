@@ -126,7 +126,7 @@ class UrlDetector:
             os.makedirs(training_logs)
         tensorboard = TensorBoard(log_dir=training_logs)
         padded_docs = self._get_padded_docs(encoded_docs, max_length=max_length)
-        self.model.fit(padded_docs, labels, epochs=epochs, verbose=verbose, callbacks=[tensorboard])
+        self.model.fit(padded_docs, labels, epochs=epochs, validation_split=0.2, verbose=verbose, callbacks=[tensorboard])
 
     def compute_accuracy(self, encoded_docs: list, labels: list, max_length=200):
         """Computes the accuracy of given data."""
