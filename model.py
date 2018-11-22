@@ -5,9 +5,10 @@ from keras.models import Sequential, Model
 from keras.layers import Dense, Flatten, Input, merge, BatchNormalization
 from keras.layers.embeddings import Embedding
 from keras.layers.convolutional import Convolution1D
-from keras import backend
+from keras import backend as K
 from keras.callbacks import TensorBoard
 from sklearn.metrics import roc_curve, auc
+from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
 
 from feature_generator import FeatureGenerator
@@ -75,9 +76,9 @@ class UrlDetector:
     @staticmethod
     def _sum_1d(x):
         """Sum layers on column axis."""
-        return backend.sum(x, axis=1)
+        return K.sum(x, axis=1)
 
-    def _build_big_conv_nn(self, optimizer="adam", compile=True):
+    def _build_big_conv_nn(self, optimizer="adam"):
         """
         Defines and compiles same CNN as J. Saxe et al. - eXpose: A Character-Level Convolutional Neural Network with
         Embeddings For Detecting Malicious URLs, File Paths and Registry Keys.
@@ -114,8 +115,7 @@ class UrlDetector:
         output = Dense(1, activation='sigmoid')(middle)
 
         self.model = Model(input=main_input, output=output)
-        if compile:
-            self.model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['acc'])
+        self.model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['acc', self.f1])
         print(self.model.summary())
 
     def _get_padded_docs(self, encoded_docs: list) -> list:
@@ -148,12 +148,12 @@ class UrlDetector:
         self.model.fit(padded_docs, labels, epochs=epochs, validation_split=0.2, verbose=verbose,
                        callbacks=[tensorboard])
 
-    def compute_accuracy(self, encoded_docs: list, labels: list):
+    def evaluate(self, encoded_docs: list, labels: list):
         """Computes the accuracy of given data."""
         padded_docs = self._get_padded_docs(encoded_docs)
-        loss, accuracy = self.model.evaluate(padded_docs, labels, verbose=1)
+        loss, accuracy, f1score = self.model.evaluate(padded_docs, labels, verbose=1)
         print('Accuracy: %f' % (accuracy * 100))
-        # TODO : compute F1-score, ROC curve
+        print('F1-score: %f' % f1score)
 
     def predict_proba(self, encoded_docs: list):
         """Predicts the probabilities of given data."""
@@ -178,6 +178,40 @@ class UrlDetector:
         plt.title('Receiver operating characteristic example')
         plt.legend(loc="lower right")
 
+    @staticmethod
+    def f1(y_true, y_pred):
+        """Computes F1-score metric. Code taken from: https://stackoverflow.com/a/45305384"""
+
+        def recall(y_true, y_pred):
+            """Recall metric.
+
+            Only computes a batch-wise average of recall.
+
+            Computes the recall, a metric for multi-label classification of
+            how many relevant items are selected.
+            """
+            true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+            possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+            recall = true_positives / (possible_positives + K.epsilon())
+            return recall
+
+        def precision(y_true, y_pred):
+            """Precision metric.
+
+            Only computes a batch-wise average of precision.
+
+            Computes the precision, a metric for multi-label classification of
+            how many selected items are relevant.
+            """
+            true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+            predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+            precision = true_positives / (predicted_positives + K.epsilon())
+            return precision
+
+        precision = precision(y_true, y_pred)
+        recall = recall(y_true, y_pred)
+        return 2 * ((precision * recall) / (precision + recall + K.epsilon()))
+
 
 if __name__ == '__main__':
     # Data
@@ -186,11 +220,12 @@ if __name__ == '__main__':
                                                url_column_name="url",
                                                label_column_name="isMalicious",
                                                to_binarize=False)
+    urls, labels = shuffle(urls, labels)
     one_hot_urls = feature_generator.one_hot_encoding(urls)
 
     # Model
     url_detector = UrlDetector("big_conv_nn")
     url_detector.fit(one_hot_urls, labels)
-    url_detector.compute_accuracy(one_hot_urls[-100:], labels[-100:])
+    url_detector.evaluate(one_hot_urls[-100:], labels[-100:])
 
     plt.show()
