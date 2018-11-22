@@ -7,6 +7,8 @@ from keras.layers.embeddings import Embedding
 from keras.layers.convolutional import Convolution1D
 from keras import backend
 from keras.callbacks import TensorBoard
+from sklearn.metrics import roc_curve, auc
+import matplotlib.pyplot as plt
 
 from feature_generator import FeatureGenerator
 
@@ -154,7 +156,27 @@ class UrlDetector:
         # TODO : compute F1-score, ROC curve
 
     def predict_proba(self, encoded_docs: list):
+        """Predicts the probabilities of given data."""
         padded_docs = self._get_padded_docs(encoded_docs)
+        probabilities = self.model.predict_proba(padded_docs)
+        return probabilities
+
+    def plot_roc_curve(self, encoded_docs: list, labels: list):
+        """Plots the ROC curve and computes its AUC."""
+        probabilities = self.predict_proba(encoded_docs)
+        fpr, tpr, thresholds = roc_curve(labels, probabilities)
+        roc_auc = auc(fpr, tpr)
+        # Figure
+        plt.figure()
+        lw = 2
+        plt.plot(fpr, tpr, color='darkorange', lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+        plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('Receiver operating characteristic example')
+        plt.legend(loc="lower right")
 
 
 if __name__ == '__main__':
@@ -170,3 +192,5 @@ if __name__ == '__main__':
     url_detector = UrlDetector("big_conv_nn")
     url_detector.fit(one_hot_urls, labels)
     url_detector.compute_accuracy(one_hot_urls[-100:], labels[-100:])
+
+    plt.show()
