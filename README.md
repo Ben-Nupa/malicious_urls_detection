@@ -9,8 +9,8 @@
 Use Python 3.4, 3.5 or 3.6 (compatibility with Tensorflow)
 
 ```bash
-python -m venv env
-env/bin/activate.bat
+python -m venv venv
+venv\Scripts\activate.bat
 pip install -r requirements.txt
 ```
 
