@@ -5,7 +5,8 @@ from keras.models import Sequential, Model
 from keras.layers import Dense, Flatten, Input, merge
 from keras.layers.embeddings import Embedding
 from keras.layers.convolutional import Convolution1D
-from keras import backend as K
+from keras import backend
+from keras.callbacks import TensorBoard
 
 from feature_generator import FeatureGenerator
 
@@ -20,7 +21,7 @@ class UrlDetector:
         model: {"simple_nn", "big_conv_nn"}
             Path of csv file containing the dataset.
         """
-        self.model = 0
+        self.model = Sequential()
         self.build_model(model)
 
     def build_model(self, model: str):
@@ -72,9 +73,9 @@ class UrlDetector:
         return model
 
     @staticmethod
-    def _sum_1d(X):
+    def _sum_1d(x):
         """Sum layers on column axis."""
-        return K.sum(X, axis=1)
+        return backend.sum(x, axis=1)
 
     def _build_big_conv_nn(self, vocab_size=87, max_length=200, optimizer="adam", compile=True):
         """
@@ -119,10 +120,13 @@ class UrlDetector:
         padded_docs = pad_sequences(encoded_docs, maxlen=max_length, padding='post')
         return padded_docs
 
-    def fit(self, encoded_docs: list, labels: list, epochs=5, verbose=1, max_length=200):
-        """Trains the model."""
+    def fit(self, encoded_docs: list, labels: list, epochs=5, verbose=1, max_length=200, training_logs="training_logs"):
+        """Trains the model with Tensorboard monitoring."""
+        if not os.path.exists(training_logs):
+            os.makedirs(training_logs)
+        tensorboard = TensorBoard(log_dir=training_logs)
         padded_docs = self._get_padded_docs(encoded_docs, max_length=max_length)
-        self.model.fit(padded_docs, labels, epochs=epochs, verbose=verbose)
+        self.model.fit(padded_docs, labels, epochs=epochs, verbose=verbose, callbacks=[tensorboard])
 
     def compute_accuracy(self, encoded_docs: list, labels: list, max_length=200):
         """Computes the accuracy of given data."""
