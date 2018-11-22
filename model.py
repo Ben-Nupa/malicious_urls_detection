@@ -2,7 +2,7 @@ import os
 from keras.preprocessing.sequence import pad_sequences
 from keras.layers.core import Dropout, Lambda
 from keras.models import Sequential, Model
-from keras.layers import Dense, Flatten, Input, merge
+from keras.layers import Dense, Flatten, Input, merge, BatchNormalization
 from keras.layers.embeddings import Embedding
 from keras.layers.convolutional import Convolution1D
 from keras import backend
@@ -67,6 +67,7 @@ class UrlDetector:
                                 border_mode='same',
                                 activation='relu',
                                 subsample_length=1))
+        model.add(BatchNormalization())
         model.add(Lambda(self._sum_1d, output_shape=(nb_filter,)))
         # model.add(BatchNormalization(mode=0))
         model.add(Dropout(0.5))
@@ -100,11 +101,18 @@ class UrlDetector:
         conv4 = self._get_complete_conv_layer(5, 256)(embedding)
 
         merged = merge.Concatenate()([conv1, conv2, conv3, conv4])
+        merged = BatchNormalization()(merged)
 
         middle = Dense(1024, activation='relu')(merged)
+        middle = BatchNormalization()(middle)
         middle = Dropout(0.5)(middle)
 
         middle = Dense(1024, activation='relu')(middle)
+        middle = BatchNormalization()(middle)
+        middle = Dropout(0.5)(middle)
+
+        middle = Dense(1024, activation='relu')(middle)
+        middle = BatchNormalization()(middle)
         middle = Dropout(0.5)(middle)
 
         output = Dense(1, activation='sigmoid')(middle)
@@ -121,7 +129,25 @@ class UrlDetector:
         return padded_docs
 
     def fit(self, encoded_docs: list, labels: list, epochs=5, verbose=1, max_length=200, training_logs="training_logs"):
-        """Trains the model with Tensorboard monitoring."""
+        """
+        Trains the model with Tensorboard monitoring. Data should be shuffled before calling this function because the
+        validation set is taken from the last samples of the provided dataset.
+
+        Parameters
+        ----------
+        encoded_docs
+            One-hot encoded URLs.
+        labels
+            Labels (0/1) of URLs.
+        epochs
+            Number of epochs to train on.
+        verbose
+            Whether to display information (loss, accuracy...) during training.
+        max_length:
+            Maximum length of considered URL (crops longer URL).
+        training_logs:
+            Directory where to store Tensorboard logs.
+        """
         if not os.path.exists(training_logs):
             os.makedirs(training_logs)
         tensorboard = TensorBoard(log_dir=training_logs)
