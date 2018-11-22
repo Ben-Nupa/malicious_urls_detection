@@ -229,3 +229,4 @@ if __name__ == '__main__':
     url_detector.evaluate(one_hot_urls[-100:], labels[-100:])
 
     plt.show()
+    # TODO: test ROC curve, new datasets

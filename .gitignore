@@ -19,7 +19,7 @@ datasets/
 .ipynb_checkpoints/
 
 # Tensorboard
-training_logs/
+
 
 # Other
 random_tests/
