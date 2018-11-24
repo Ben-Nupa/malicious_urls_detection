@@ -33,8 +33,8 @@ def createDataset(ratioGB, amountVal, startingDate, endingDate) :
     #Exctracting good URLS
     print("Exctracting good urls...")
     goodDataset = os.path.join("datasets", "good_urls.csv")
-    goodDataframe: pd.DataFrame = pd.read_csv(badDataset,";")
-    goodUrls = badDataframe["URL"].sample(int(len(urls)*ratioGB)).tolist()
+    goodDataframe: pd.DataFrame = pd.read_csv(goodDataset,";")
+    goodUrls = goodDataframe["URL"].sample(int(len(urls)*ratioGB)).tolist()
 
     for i in range(len(goodUrls)) :
         #Appending good urls to the dataset
