@@ -80,11 +80,11 @@ def load_dated_data(bad_dataset: str, good_dataset: str, ratio_good_bad: float, 
         if datetime.strptime(str(bad_dates[i]), '%Y%m%d').date() < separation_date:
             # Malicious URLs before a certain date go into the training set
             training_urls.append(bad_urls[i])
-            training_labels.append(0)
+            training_labels.append(1)
         else:
             # Malicious URLs after a certain date go into the testing set
             testing_urls.append(bad_urls[i])
-            testing_labels.append(0)
+            testing_labels.append(1)
 
     # Extracting good URLS
     good_dataframe = pd.read_csv(good_dataset, ";")
@@ -92,14 +92,17 @@ def load_dated_data(bad_dataset: str, good_dataset: str, ratio_good_bad: float, 
     idx_seperation = int(len(training_urls) * ratio_good_bad)
 
     training_urls += good_urls[:idx_seperation]
-    training_labels += [1 for i in range(len(good_urls[:idx_seperation]))]
+    training_labels += [0 for i in range(len(good_urls[:idx_seperation]))]
 
     testing_urls += good_urls[idx_seperation:]
-    testing_labels += [1 for i in range(len(good_urls[idx_seperation:]))]
+    testing_labels += [0 for i in range(len(good_urls[idx_seperation:]))]
 
     # Shuffle
     training_urls, training_labels = shuffle(training_urls, training_labels)
     testing_urls, testing_labels = shuffle(testing_urls, testing_labels)
+
+    print(training_urls[:2], training_labels[:2])
+    print(testing_urls[:2], testing_labels[:2])
 
     print("Created a dataset with separation date " + str(separation_date) + " and testing set represents " +
           str(100 * len(testing_urls) / (len(bad_urls) + len(good_urls))) + "% of original dataset.")

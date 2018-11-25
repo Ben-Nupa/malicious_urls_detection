@@ -254,8 +254,8 @@ def test_dated_dataset():
     url_detector.fit(one_hot_training_urls, training_labels)
 
     # Evaluate
-    url_detector.evaluate(one_hot_testing_urls, testing_urls)
-    url_detector.plot_roc_curve(one_hot_testing_urls, testing_urls)
+    url_detector.evaluate(one_hot_testing_urls, testing_labels)
+    url_detector.plot_roc_curve(one_hot_testing_urls, testing_labels)
 
     plt.show()
 
