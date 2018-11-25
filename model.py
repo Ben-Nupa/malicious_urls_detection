@@ -32,7 +32,7 @@ class UrlDetector:
         """
         self.max_length = max_length
         self.vocab_size = vocab_size
-        self.model = Sequential()
+        self.model = Model()
         self.build_model(model)
 
     def build_model(self, model: str):
@@ -124,7 +124,7 @@ class UrlDetector:
         padded_docs = pad_sequences(encoded_docs, maxlen=self.max_length, padding='post')
         return padded_docs
 
-    def fit(self, encoded_docs: list, labels: list, epochs=5, verbose=1, training_logs="training_logs"):
+    def fit(self, encoded_docs: list, labels: list, batch_size=128, epochs=5, verbose=1, training_logs="training_logs"):
         """
         Trains the model with Tensorboard monitoring. Data should be shuffled before calling this function because the
         validation set is taken from the last samples of the provided dataset.
@@ -135,6 +135,8 @@ class UrlDetector:
             One-hot encoded URLs.
         labels
             Labels (0/1) of URLs.
+        batch_size
+            Number of samples per gradient update.
         epochs
             Number of epochs to train on.
         verbose
@@ -146,7 +148,7 @@ class UrlDetector:
             os.makedirs(training_logs)
         tensorboard = TensorBoard(log_dir=training_logs)
         padded_docs = self._get_padded_docs(encoded_docs)
-        self.model.fit(padded_docs, labels, epochs=epochs, validation_split=0.2, verbose=verbose,
+        self.model.fit(padded_docs, labels, batch_size=batch_size, epochs=epochs, validation_split=0.2, verbose=verbose,
                        callbacks=[tensorboard])
 
     def evaluate(self, encoded_docs: list, labels: list):
@@ -156,10 +158,10 @@ class UrlDetector:
         print('Accuracy: %f' % (accuracy * 100))
         print('F1-score: %f' % f1score)
 
-    def predict_proba(self, encoded_docs: list):
+    def predict_proba(self, encoded_docs: list) -> np.ndarray:
         """Predicts the probabilities of given data."""
         padded_docs = self._get_padded_docs(encoded_docs)
-        probabilities = self.model.predict_proba(padded_docs)
+        probabilities = self.model.predict(padded_docs)
         return probabilities
 
     def plot_roc_curve(self, encoded_docs: list, labels: list):
@@ -227,7 +229,7 @@ def test_non_dated_dataset():
 
     # Model
     url_detector = UrlDetector("big_conv_nn")
-    url_detector.fit(one_hot_urls, labels)
+    url_detector.fit(one_hot_urls, labels, epochs=1)
 
     # Evaluate
     url_detector.evaluate(one_hot_urls[-100:], labels[-100:])
