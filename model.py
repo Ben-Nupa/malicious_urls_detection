@@ -6,6 +6,7 @@ from keras.layers.embeddings import Embedding
 from keras.layers.convolutional import Convolution1D
 from keras import backend as K
 from keras.callbacks import TensorBoard
+from keras.optimizers import Adam
 from sklearn.metrics import roc_curve, auc
 import matplotlib.pyplot as plt
 import numpy as np
@@ -79,16 +80,9 @@ class UrlDetector:
         """Sum layers on column axis."""
         return K.sum(x, axis=1)
 
-    def _build_big_conv_nn(self, optimizer="adam"):
-        """
-        Defines and compiles same CNN as J. Saxe et al. - eXpose: A Character-Level Convolutional Neural Network with
-        Embeddings For Detecting Malicious URLs, File Paths and Registry Keys.
-
-        Parameters
-        ----------
-        optimizer:
-            Optimizer algorithm
-        """
+    def _build_big_conv_nn(self):
+        """Defines and compiles same CNN as J. Saxe et al. - eXpose: A Character-Level Convolutional Neural Network with
+        Embeddings For Detecting Malicious URLs, File Paths and Registry Keys."""
         main_input = Input(shape=(self.max_length,), dtype='int32', name='main_input')
         embedding = Embedding(input_dim=self.vocab_size, output_dim=32, input_length=self.max_length,
                               dropout=0)(main_input)
@@ -116,6 +110,7 @@ class UrlDetector:
         output = Dense(1, activation='sigmoid')(middle)
 
         self.model = Model(input=main_input, output=output)
+        optimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
         self.model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['acc', self.f1])
         print(self.model.summary())
 
@@ -172,7 +167,7 @@ class UrlDetector:
         # Figure
         plt.figure()
         lw = 2
-        plt.plot(fpr, tpr, color='darkorange', lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+        plt.plot(fpr, tpr, color='darkorange', lw=lw, label='ROC curve (AUC = %0.2f)' % roc_auc)
         plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
         plt.xlim([0.0, 1.0])
         plt.ylim([0.0, 1.05])
