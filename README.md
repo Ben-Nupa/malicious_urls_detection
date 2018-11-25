@@ -19,6 +19,8 @@ pip install -r requirements.txt
 
 [Dataset 2](https://github.com/incertum/cyber-matrix-ai/blob/master/Malicious-URL-Detection-Deep-Learning/data/url_data_mega_deep_learning.csv): Balanced dataset
 
+[Dataset 3](https://drive.google.com/drive/folders/1kLGwMSk0e636DDEjpx9YR8nsHxy9v91C): Dated malicious URLs, built from PhishTank and Malware Domains Blocklist
+
 ## Credits
 The code here is based on the work of the following people:
 - Hillary Sanders and Joshua Saxe - *Garbage In, Garbage Out How purportedly great ML models can be screwed up by bad data* - [paper](https://www.blackhat.com/docs/us-17/wednesday/us-17-Sanders-Garbage-In-Garbage-Out-How-Purportedly-Great-ML-Models-Can-Be-Screwed-Up-By-Bad-Data-wp.pdf), [slides](https://www.blackhat.com/docs/us-17/wednesday/us-17-Sanders-Garbage-In-Garbage-Out-How-Purportedly-Great-ML-Models-Can-Be-Screwed-Up-By-Bad-Data.pdf)
