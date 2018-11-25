@@ -21,5 +21,8 @@ datasets/
 # Tensorboard
 training_logs/
 
+# Terminal
+.bat
+
 # Other
 random_tests/

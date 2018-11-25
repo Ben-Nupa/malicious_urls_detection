@@ -1,4 +1,3 @@
-import os
 from keras.preprocessing.sequence import pad_sequences
 from keras.layers.core import Dropout, Lambda
 from keras.models import Sequential, Model
@@ -8,10 +7,12 @@ from keras.layers.convolutional import Convolution1D
 from keras import backend as K
 from keras.callbacks import TensorBoard
 from sklearn.metrics import roc_curve, auc
-from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
+import numpy as np
+import os
 
 from feature_generator import FeatureGenerator
+from dataset_extractor import *
 
 
 class UrlDetector:
@@ -179,10 +180,10 @@ class UrlDetector:
         plt.legend(loc="lower right")
 
     @staticmethod
-    def f1(y_true, y_pred):
+    def f1(y_true: np.array, y_pred: np.array):
         """Computes F1-score metric. Code taken from: https://stackoverflow.com/a/45305384"""
 
-        def recall(y_true, y_pred):
+        def compute_recall(y_true, y_pred):
             """Recall metric.
 
             Only computes a batch-wise average of recall.
@@ -192,10 +193,10 @@ class UrlDetector:
             """
             true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
             possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-            recall = true_positives / (possible_positives + K.epsilon())
-            return recall
+            recall_score = true_positives / (possible_positives + K.epsilon())
+            return recall_score
 
-        def precision(y_true, y_pred):
+        def compute_precision(y_true, y_pred):
             """Precision metric.
 
             Only computes a batch-wise average of precision.
@@ -205,28 +206,59 @@ class UrlDetector:
             """
             true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
             predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-            precision = true_positives / (predicted_positives + K.epsilon())
-            return precision
+            precision_score = true_positives / (predicted_positives + K.epsilon())
+            return precision_score
 
-        precision = precision(y_true, y_pred)
-        recall = recall(y_true, y_pred)
+        precision = compute_precision(y_true, y_pred)
+        recall = compute_recall(y_true, y_pred)
         return 2 * ((precision * recall) / (precision + recall + K.epsilon()))
 
 
-if __name__ == '__main__':
+def test_non_dated_dataset():
     # Data
+    urls, labels = load_data(os.path.join("datasets", "url_data_mega_deep_learning.csv"),
+                             url_column_name="url",
+                             label_column_name="isMalicious",
+                             to_binarize=False)
+
+    # Features
     feature_generator = FeatureGenerator()
-    urls, labels = feature_generator.load_data(os.path.join("datasets", "url_data_mega_deep_learning.csv"),
-                                               url_column_name="url",
-                                               label_column_name="isMalicious",
-                                               to_binarize=False)
-    urls, labels = shuffle(urls, labels)
     one_hot_urls = feature_generator.one_hot_encoding(urls)
 
     # Model
     url_detector = UrlDetector("big_conv_nn")
     url_detector.fit(one_hot_urls, labels)
+
+    # Evaluate
     url_detector.evaluate(one_hot_urls[-100:], labels[-100:])
+    url_detector.plot_roc_curve(one_hot_urls[-100:], labels[-100:])
 
     plt.show()
-    # TODO: test ROC curve, new datasets
+
+
+def test_dated_dataset():
+    # Data
+
+    training_urls, training_labels, testing_urls, testing_labels = load_dated_data(
+        os.path.join("datasets", "bad_urls1.csv"), os.path.join("datasets", "good_urls.csv"),
+        ratio_good_bad=1, separation_date=date(2015, 12, 1))
+
+    # Features
+    feature_generator = FeatureGenerator()
+    one_hot_training_urls = feature_generator.one_hot_encoding(training_urls)
+    one_hot_testing_urls = feature_generator.one_hot_encoding(testing_urls)
+
+    # Model
+    url_detector = UrlDetector("big_conv_nn")
+    url_detector.fit(one_hot_training_urls, training_labels)
+
+    # Evaluate
+    url_detector.evaluate(one_hot_testing_urls, testing_urls)
+    url_detector.plot_roc_curve(one_hot_testing_urls, testing_urls)
+
+    plt.show()
+
+
+if __name__ == '__main__':
+    test_non_dated_dataset()
+    # test_dated_dataset()
