@@ -229,7 +229,7 @@ def test_non_dated_dataset():
 
     # Model
     url_detector = UrlDetector("big_conv_nn")
-    url_detector.fit(one_hot_urls, labels, epochs=1)
+    url_detector.fit(one_hot_urls, labels, epochs=5)
 
     # Evaluate
     url_detector.evaluate(one_hot_urls[-100:], labels[-100:])
@@ -240,10 +240,9 @@ def test_non_dated_dataset():
 
 def test_dated_dataset():
     # Data
-
     training_urls, training_labels, testing_urls, testing_labels = load_dated_data(
         os.path.join("datasets", "bad_urls1.csv"), os.path.join("datasets", "good_urls.csv"),
-        ratio_good_bad=1, separation_date=date(2015, 12, 1))
+        ratio_good_bad=1, separation_date=date(2018, 7, 15))  # 20% is at 15/07/2018
 
     # Features
     feature_generator = FeatureGenerator()
@@ -262,5 +261,5 @@ def test_dated_dataset():
 
 
 if __name__ == '__main__':
-    test_non_dated_dataset()
-    # test_dated_dataset()
+    # test_non_dated_dataset()
+    test_dated_dataset()

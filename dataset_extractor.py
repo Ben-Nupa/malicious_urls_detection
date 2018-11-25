@@ -89,17 +89,18 @@ def load_dated_data(bad_dataset: str, good_dataset: str, ratio_good_bad: float, 
     # Extracting good URLS
     good_dataframe = pd.read_csv(good_dataset, ";")
     good_urls = good_dataframe["URL"].sample(int(len(bad_urls) * ratio_good_bad)).tolist()
+    idx_seperation = int(len(training_urls) * ratio_good_bad)
 
-    training_urls += good_urls[:len(training_urls)]
-    training_labels += [1 for i in range(len(training_labels))]
+    training_urls += good_urls[:idx_seperation]
+    training_labels += [1 for i in range(len(good_urls[:idx_seperation]))]
 
-    testing_urls += good_urls[len(training_urls):]
-    testing_labels += [1 for i in range(len(testing_labels))]
+    testing_urls += good_urls[idx_seperation:]
+    testing_labels += [1 for i in range(len(good_urls[idx_seperation:]))]
 
     # Shuffle
     training_urls, training_labels = shuffle(training_urls, training_labels)
     testing_urls, testing_labels = shuffle(testing_urls, testing_labels)
 
     print("Created a dataset with separation date " + str(separation_date) + " and testing set represents " +
-          str(len(testing_urls / (len(bad_urls) + len(good_urls)))) + "% of original dataset.")
+          str(100 * len(testing_urls) / (len(bad_urls) + len(good_urls))) + "% of original dataset.")
     return training_urls, training_labels, testing_urls, testing_labels
