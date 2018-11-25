@@ -101,9 +101,6 @@ def load_dated_data(bad_dataset: str, good_dataset: str, ratio_good_bad: float, 
     training_urls, training_labels = shuffle(training_urls, training_labels)
     testing_urls, testing_labels = shuffle(testing_urls, testing_labels)
 
-    print(training_urls[:2], training_labels[:2])
-    print(testing_urls[:2], testing_labels[:2])
-
     print("Created a dataset with separation date " + str(separation_date) + " and testing set represents " +
           str(100 * len(testing_urls) / (len(bad_urls) + len(good_urls))) + "% of original dataset.")
     return training_urls, training_labels, testing_urls, testing_labels

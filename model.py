@@ -69,7 +69,7 @@ class UrlDetector:
                                 border_mode='same',
                                 activation='relu',
                                 subsample_length=1))
-        model.add(BatchNormalization())
+        # model.add(BatchNormalization())
         model.add(Lambda(self._sum_1d, output_shape=(nb_filter,)))
         # model.add(BatchNormalization(mode=0))
         model.add(Dropout(0.5))
@@ -246,7 +246,7 @@ def test_dated_dataset():
 
     # Model
     url_detector = UrlDetector("big_conv_nn")
-    url_detector.fit(one_hot_training_urls, training_labels)
+    url_detector.fit(one_hot_training_urls, training_labels, epochs=5, batch_size=32)
 
     # Evaluate
     url_detector.evaluate(one_hot_testing_urls, testing_labels)
