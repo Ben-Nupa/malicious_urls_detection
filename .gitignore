@@ -22,7 +22,7 @@ datasets/
 training_logs/
 
 # Terminal
-.bat
+*.bat
 
 # Other
 random_tests/
