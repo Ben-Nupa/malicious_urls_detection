@@ -1,6 +1,7 @@
 import pandas as pd
 from datetime import datetime, date
 from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
 
 
 def load_data(dataset: str, url_column_name="url", label_column_name="label", to_binarize=False, neg_word="bad",
@@ -47,7 +48,7 @@ def load_data(dataset: str, url_column_name="url", label_column_name="label", to
 
 def load_dated_data(bad_dataset: str, good_dataset: str, ratio_good_bad: float, separation_date: date) -> tuple:
     """
-    Load given dated data file.
+    Load given dated data file. The label '1' is for malicious URLs.
 
     Parameters
     ----------
@@ -103,4 +104,53 @@ def load_dated_data(bad_dataset: str, good_dataset: str, ratio_good_bad: float, 
 
     print("Created a dataset with separation date " + str(separation_date) + " and testing set represents " +
           str(100 * len(testing_urls) / (len(bad_urls) + len(good_urls))) + "% of original dataset.")
+    return training_urls, training_labels, testing_urls, testing_labels
+
+
+def load_randomized_dated_data(bad_dataset: str, good_dataset: str, ratio_good_bad: float,
+                               ratio_testing_set: float) -> tuple:
+    """
+    Load given dated data file on a randomized fashion. The label '1' is for malicious URLs.
+
+    Parameters
+    ----------
+    bad_dataset
+        Path of csv file containing the dataset with bad URLs.
+    good_dataset
+        Path of csv file containing the dataset with benign URLs.
+    ratio_good_bad
+        Ratio of (Good Data)/(Bad Data).
+    ratio_testing_set
+        Represents the proportion of the dataset to include in the test split
+
+    Returns
+    -------
+    tuple
+        (list of training urls, list of training labels, list of testing urls, list of testing labels)
+    """
+    urls = []
+    labels = []
+
+    # Extracting bad URLS
+    bad_dataframe = pd.read_csv(bad_dataset, ";")
+    urls = bad_dataframe["URL"].tolist()
+    labels = [1 for i in range(len(urls))]
+
+    # Extracting good URLS
+    good_dataframe = pd.read_csv(good_dataset, ";")
+    good_urls = good_dataframe["URL"].sample(int(len(urls) * ratio_good_bad)).tolist()
+    idx_seperation = int(len(urls) * ratio_good_bad)
+
+    urls += good_urls[:idx_seperation]
+    labels += [0 for i in range(len(good_urls[:idx_seperation]))]
+
+    # Shuffle
+    urls, labels = shuffle(urls, labels)
+
+    # Split
+    training_urls, testing_urls, training_labels, testing_labels = train_test_split(urls, labels,
+                                                                                    test_size=ratio_testing_set)
+
+    print("Created a randomized dated dataset where testing set represents " + str(
+        100 * ratio_testing_set) + "% of original dataset.")
     return training_urls, training_labels, testing_urls, testing_labels

@@ -233,11 +233,32 @@ def test_non_dated_dataset():
     plt.show()
 
 
-def test_dated_dataset():
+def test_dated_dataset(day=15, month=7, year=2018, randomise=False, ratio_good_bad=1, ratio_testing_set=0.2):
+    """
+    Uses a dated dataset.
+
+    Parameters
+    ----------
+    day, month, year
+        Limit date: the network is trained on data dated before this day and tested on data from this day and newer.
+        The proportion training/testing is at 80%/20% for the date 15/07/2018.
+        Only used if 'randomise' = False.
+    randomise
+        Whether to randomise the set so as to use or not the date of the data.
+    ratio_good_bad
+        Ratio of (Good Data)/(Bad Data).
+    ratio_testing_set
+        Represents the proportion of the dataset to include in the test split. Only used if 'randomise' = True
+    """
     # Data
-    training_urls, training_labels, testing_urls, testing_labels = load_dated_data(
-        os.path.join("datasets", "bad_urls1.csv"), os.path.join("datasets", "good_urls.csv"),
-        ratio_good_bad=1, separation_date=date(2018, 7, 15))  # 20% is at 15/07/2018
+    if randomise:
+        training_urls, training_labels, testing_urls, testing_labels = load_randomized_dated_data(
+            os.path.join("datasets", "bad_urls1.csv"), os.path.join("datasets", "good_urls.csv"),
+            ratio_good_bad=ratio_good_bad, ratio_testing_set=ratio_testing_set)
+    else:
+        training_urls, training_labels, testing_urls, testing_labels = load_dated_data(
+            os.path.join("datasets", "bad_urls1.csv"), os.path.join("datasets", "good_urls.csv"),
+            ratio_good_bad=ratio_good_bad, separation_date=date(year, month, day))  # 20% is at 15/07/2018
 
     # Features
     feature_generator = FeatureGenerator()
@@ -246,7 +267,7 @@ def test_dated_dataset():
 
     # Model
     url_detector = UrlDetector("big_conv_nn")
-    url_detector.fit(one_hot_training_urls, training_labels, epochs=5, batch_size=32)
+    url_detector.fit(one_hot_training_urls, training_labels, epochs=5, batch_size=128)
 
     # Evaluate
     url_detector.evaluate(one_hot_testing_urls, testing_labels)
@@ -257,4 +278,4 @@ def test_dated_dataset():
 
 if __name__ == '__main__':
     # test_non_dated_dataset()
-    test_dated_dataset()
+    test_dated_dataset(randomise=True)
