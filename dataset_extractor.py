@@ -128,9 +128,6 @@ def load_randomized_dated_data(bad_dataset: str, good_dataset: str, ratio_good_b
     tuple
         (list of training urls, list of training labels, list of testing urls, list of testing labels)
     """
-    urls = []
-    labels = []
-
     # Extracting bad URLS
     bad_dataframe = pd.read_csv(bad_dataset, ";")
     urls = bad_dataframe["URL"].tolist()

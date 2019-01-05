@@ -12,9 +12,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-from feature_generator import FeatureGenerator
-from dataset_extractor import *
-
 
 class UrlDetector:
     def __init__(self, model="simple_nn", vocab_size=87, max_length=200):
@@ -119,7 +116,8 @@ class UrlDetector:
         padded_docs = pad_sequences(encoded_docs, maxlen=self.max_length, padding='post')
         return padded_docs
 
-    def fit(self, encoded_docs: list, labels: list, batch_size=128, epochs=5, verbose=1, training_logs="training_logs"):
+    def fit(self, encoded_docs: list, labels: list, batch_size=128, epochs=5, verbose=1, training_logs="training_logs",
+            validation_data=None):
         """
         Trains the model with Tensorboard monitoring. Data should be shuffled before calling this function because the
         validation set is taken from the last samples of the provided dataset.
@@ -143,13 +141,19 @@ class UrlDetector:
             os.makedirs(training_logs)
         tensorboard = TensorBoard(log_dir=training_logs)
         padded_docs = self._get_padded_docs(encoded_docs)
-        self.model.fit(padded_docs, labels, batch_size=batch_size, epochs=epochs, validation_split=0.2, verbose=verbose,
-                       callbacks=[tensorboard])
+        if validation_data is None:
+            self.model.fit(padded_docs, labels, batch_size=batch_size, epochs=epochs, validation_split=0.2,
+                           verbose=verbose, callbacks=[tensorboard])
+        else:
+            one_hot_val_urls, y_val = validation_data
+            X_val = self._get_padded_docs(one_hot_val_urls)
+            self.model.fit(padded_docs, labels, batch_size=batch_size, epochs=epochs, validation_data=(X_val, y_val),
+                           verbose=verbose, callbacks=[tensorboard])
 
     def evaluate(self, encoded_docs: list, labels: list):
         """Computes the accuracy of given data."""
         padded_docs = self._get_padded_docs(encoded_docs)
-        loss, accuracy, f1score = self.model.evaluate(padded_docs, labels, verbose=1)
+        loss, accuracy, f1score = self.model.evaluate(padded_docs, labels, verbose=0)
         print('Accuracy: %f' % (accuracy * 100))
         print('F1-score: %f' % f1score)
 
@@ -209,73 +213,3 @@ class UrlDetector:
         precision = compute_precision(y_true, y_pred)
         recall = compute_recall(y_true, y_pred)
         return 2 * ((precision * recall) / (precision + recall + K.epsilon()))
-
-
-def test_non_dated_dataset():
-    # Data
-    urls, labels = load_data(os.path.join("datasets", "url_data_mega_deep_learning.csv"),
-                             url_column_name="url",
-                             label_column_name="isMalicious",
-                             to_binarize=False)
-
-    # Features
-    feature_generator = FeatureGenerator()
-    one_hot_urls = feature_generator.one_hot_encoding(urls)
-
-    # Model
-    url_detector = UrlDetector("big_conv_nn")
-    url_detector.fit(one_hot_urls, labels, epochs=5)
-
-    # Evaluate
-    url_detector.evaluate(one_hot_urls[-100:], labels[-100:])
-    url_detector.plot_roc_curve(one_hot_urls[-100:], labels[-100:])
-
-    plt.show()
-
-
-def test_dated_dataset(day=15, month=7, year=2018, randomise=False, ratio_good_bad=1, ratio_testing_set=0.2):
-    """
-    Uses a dated dataset.
-
-    Parameters
-    ----------
-    day, month, year
-        Limit date: the network is trained on data dated before this day and tested on data from this day and newer.
-        The proportion training/testing is at 80%/20% for the date 15/07/2018.
-        Only used if 'randomise' = False.
-    randomise
-        Whether to randomise the set so as to use or not the date of the data.
-    ratio_good_bad
-        Ratio of (Good Data)/(Bad Data).
-    ratio_testing_set
-        Represents the proportion of the dataset to include in the test split. Only used if 'randomise' = True
-    """
-    # Data
-    if randomise:
-        training_urls, training_labels, testing_urls, testing_labels = load_randomized_dated_data(
-            os.path.join("datasets", "bad_urls1.csv"), os.path.join("datasets", "good_urls.csv"),
-            ratio_good_bad=ratio_good_bad, ratio_testing_set=ratio_testing_set)
-    else:
-        training_urls, training_labels, testing_urls, testing_labels = load_dated_data(
-            os.path.join("datasets", "bad_urls1.csv"), os.path.join("datasets", "good_urls.csv"),
-            ratio_good_bad=ratio_good_bad, separation_date=date(year, month, day))  # 20% is at 15/07/2018
-
-    # Features
-    feature_generator = FeatureGenerator()
-    one_hot_training_urls = feature_generator.one_hot_encoding(training_urls)
-    one_hot_testing_urls = feature_generator.one_hot_encoding(testing_urls)
-
-    # Model
-    url_detector = UrlDetector("big_conv_nn")
-    url_detector.fit(one_hot_training_urls, training_labels, epochs=5, batch_size=128)
-
-    # Evaluate
-    url_detector.evaluate(one_hot_testing_urls, testing_labels)
-    url_detector.plot_roc_curve(one_hot_testing_urls, testing_labels)
-
-    plt.show()
-
-
-if __name__ == '__main__':
-    # test_non_dated_dataset()
-    test_dated_dataset(randomise=True)
