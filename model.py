@@ -109,7 +109,7 @@ class UrlDetector:
         self.model = Model(input=main_input, output=output)
         optimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
         self.model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['acc', self.f1])
-        print(self.model.summary())
+        self.model.summary()
 
     def _get_padded_docs(self, encoded_docs: list) -> list:
         """Makes the data readable for the model."""
@@ -117,7 +117,7 @@ class UrlDetector:
         return padded_docs
 
     def fit(self, encoded_docs: list, labels: list, batch_size=128, epochs=5, verbose=1, training_logs="training_logs",
-            validation_data=None):
+            validation_data=None, validation_split=0.2):
         """
         Trains the model with Tensorboard monitoring. Data should be shuffled before calling this function because the
         validation set is taken from the last samples of the provided dataset.
@@ -134,15 +134,19 @@ class UrlDetector:
             Number of epochs to train on.
         verbose
             Whether to display information (loss, accuracy...) during training.
-        training_logs:
+        training_logs
             Directory where to store Tensorboard logs.
+        validation_data
+            Tuple with the validation data (X_val, y_val)
+        validation_split
+            % of data to put in the validation set. Only used if 'validation_data=None'.
         """
         if not os.path.exists(training_logs):
             os.makedirs(training_logs)
         tensorboard = TensorBoard(log_dir=training_logs)
         padded_docs = self._get_padded_docs(encoded_docs)
         if validation_data is None:
-            self.model.fit(padded_docs, labels, batch_size=batch_size, epochs=epochs, validation_split=0.2,
+            self.model.fit(padded_docs, labels, batch_size=batch_size, epochs=epochs, validation_split=validation_split,
                            verbose=verbose, callbacks=[tensorboard])
         else:
             one_hot_val_urls, y_val = validation_data
